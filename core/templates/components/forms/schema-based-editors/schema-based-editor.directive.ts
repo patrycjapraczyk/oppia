@@ -44,12 +44,14 @@ require(
 require(
   'components/forms/schema-based-editors/' +
   'schema-based-unicode-editor.directive.ts');
+require('components/forms/validators/has-length-at-least.filter.ts');
 require('components/forms/validators/is-at-least.filter.ts');
 require('components/forms/validators/is-at-most.filter.ts');
 require('components/forms/validators/is-float.filter.ts');
 require('components/forms/validators/is-integer.filter.ts');
 require('components/forms/validators/is-nonempty.filter.ts');
 require('components/forms/validators/is-url-fragment.filter.ts');
+require('components/forms/validators/is-regex-matched.filter.ts');
 
 angular.module('oppia').directive('schemaBasedEditor', [
   function() {
@@ -106,6 +108,8 @@ export class SchemaBasedEditorDirective extends UpgradeComponent {
   @Input() onInputBlur: () => void;
   @Input() onInputFocus: () => void;
   @Input() headersEnabled;
+  @Input() notRequired: () => boolean;
+
   constructor(
       elementRef: ElementRef,
       injector: Injector) {

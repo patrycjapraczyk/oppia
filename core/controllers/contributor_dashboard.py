@@ -115,12 +115,11 @@ class ContributionOpportunitiesHandler(base.BaseHandler):
             'next_cursor': next_cursor,
             'more': more
         }
-
         self.render_json(self.values)
 
     def _get_skill_opportunities_with_corresponding_topic_name(self, cursor):
         """Returns a list of skill opportunities available for questions with
-        topic information.
+        a corresponding topic name.
 
         Args:
             cursor: str or None. If provided, the list of returned entities
@@ -144,24 +143,38 @@ class ContributionOpportunitiesHandler(base.BaseHandler):
         for classroom_dict in config_domain.CLASSROOM_PAGES_DATA.value:
             classroom_topic_ids.extend(classroom_dict['topic_ids'])
         classroom_topics = topic_fetchers.get_topics_by_ids(classroom_topic_ids)
-        classroom_topics_with_skills = [
-            topic for topic in classroom_topics
-            if topic and topic.get_all_skill_ids()
-        ]
+        # Associate each skill with one classroom topic name.
+        # TODO(#8912): Associate each skill/skill opportunity with  all linked
+        # topics.
+        classroom_topic_skill_id_to_topic_name = {}
+        for topic in classroom_topics:
+            if topic is None:
+                continue
+            for skill_id in topic.get_all_skill_ids():
+                classroom_topic_skill_id_to_topic_name[skill_id] = topic.name
+
         skill_opportunities, cursor, more = (
             opportunity_services.get_skill_opportunities(cursor))
-        id_to_skill_opportunity_dict = {
-            opp.id: opp.to_dict() for opp in skill_opportunities}
         opportunities = []
-        for topic in classroom_topics_with_skills:
-            for skill_id in topic.get_all_skill_ids():
-                if len(opportunities) == constants.OPPORTUNITIES_PAGE_SIZE:
-                    break
-                if skill_id in id_to_skill_opportunity_dict:
-                    skill_opportunity_dict = (
-                        id_to_skill_opportunity_dict[skill_id])
-                    skill_opportunity_dict['topic_name'] = topic.name
+        # Fetch opportunities until we have at least a page's worth that
+        # correspond to a classroom or there are no more opportunities.
+        while len(opportunities) < constants.OPPORTUNITIES_PAGE_SIZE:
+            for skill_opportunity in skill_opportunities:
+                if (
+                        skill_opportunity.id
+                        in classroom_topic_skill_id_to_topic_name):
+                    skill_opportunity_dict = skill_opportunity.to_dict()
+                    skill_opportunity_dict['topic_name'] = (
+                        classroom_topic_skill_id_to_topic_name[
+                            skill_opportunity.id])
                     opportunities.append(skill_opportunity_dict)
+            if (
+                    not more or
+                    len(opportunities) >= constants.OPPORTUNITIES_PAGE_SIZE):
+                break
+            skill_opportunities, cursor, more = (
+                opportunity_services.get_skill_opportunities(cursor))
+
         return opportunities, cursor, more
 
     def _get_translation_opportunity_dicts(self, language_code, search_cursor):
@@ -275,9 +288,10 @@ class TranslatableTextHandler(base.BaseHandler):
         minus any contents found in suggestions.
 
         Args:
-            state_names_to_content_id_mapping: dict(str, dict(str, TranslatableItem)). A dict # pylint: disable=line-too-long
-                where state_name is the key and a dict with content_id as
-                the key and TranslatableItem as value.
+            state_names_to_content_id_mapping:
+                dict(str, dict(str, TranslatableItem)). A dict whose keys are
+                state names, and whose corresponding values are each dicts
+                mapping content IDs to the corresponding translatable items.
             suggestions: list(Suggestion). A list of translation suggestions.
 
         Returns:
@@ -289,18 +303,21 @@ class TranslatableTextHandler(base.BaseHandler):
         for state_name in state_names_to_content_id_mapping:
             content_id_to_translatable_item = dict(
                 state_names_to_content_id_mapping[state_name])
-            for content_id in content_id_to_translatable_item.keys():
-                if self._content_in_review(state_name, content_id, suggestions):
-                    del content_id_to_translatable_item[content_id]
-            if content_id_to_translatable_item:
+            content_id_to_unsubmitted_translatable_item = {}
+            for content_id, item in content_id_to_translatable_item.items():
+                if not self._is_content_in_review(
+                        state_name, content_id, suggestions):
+                    content_id_to_unsubmitted_translatable_item[content_id] = (
+                        item)
+            if content_id_to_unsubmitted_translatable_item:
                 final_mapping[state_name] = {
                     cid: translatable_item.to_dict()
                     for cid, translatable_item in (
-                        content_id_to_translatable_item.items())
+                        content_id_to_unsubmitted_translatable_item.items())
                 }
         return final_mapping
 
-    def _content_in_review(self, state_name, content_id, suggestions):
+    def _is_content_in_review(self, state_name, content_id, suggestions):
         """Returns whether a suggestion exists in suggestions with a change dict
         matching the supplied state_name and content_id.
 

@@ -48,9 +48,7 @@ EXCLUDED_PATHS = (
     '%s/*' % js_ts_linter.COMPILED_TYPESCRIPT_TMP_PATH)
 
 GENERATED_FILE_PATHS = (
-    'extensions/interactions/LogicProof/static/js/generatedDefaultData.ts',
-    'extensions/interactions/LogicProof/static/js/generatedParser.ts',
-    'core/templates/expressions/parser.js')
+    'core/templates/expressions/parser.js',)
 
 CONFIG_FILE_PATHS = (
     'core/tests/.browserstack.env.example',
@@ -401,16 +399,14 @@ class GeneralPurposeLinter(python_utils.OBJECT):
         file_content = self.file_cache.readlines(filepath)
         for index, regexp_to_check in enumerate(
                 pattern_list):
-            if (any([filepath.endswith(
+            if (any(filepath.endswith(
                     allowed_type) for allowed_type in (
-                        regexp_to_check['included_types'])]) and (
-                            not any([
+                        regexp_to_check['included_types'])) and (
+                            not any(
                                 filepath.endswith(
                                     pattern) for pattern in (
-                                        regexp_to_check[
-                                            'excluded_files'] +
-                                        regexp_to_check[
-                                            'excluded_dirs'])]))):
+                                        regexp_to_check['excluded_files'] +
+                                        regexp_to_check['excluded_dirs'])))):
                 pattern_found_list.append(index)
                 for line in file_content:
                     if regexp_to_check['regexp'].search(line):
@@ -458,7 +454,7 @@ class GeneralPurposeLinter(python_utils.OBJECT):
         for filepath in all_filepaths:
             file_content = self.file_cache.readlines(filepath)
             total_files_checked += 1
-            for pattern in BAD_PATTERNS:
+            for pattern, error in BAD_PATTERNS.items():
                 if is_filepath_excluded_for_bad_patterns_check(
                         pattern, filepath):
                     continue
@@ -467,7 +463,7 @@ class GeneralPurposeLinter(python_utils.OBJECT):
                         failed = True
                         error_message = ('%s --> Line %s: %s' % (
                             filepath, line_num + 1,
-                            BAD_PATTERNS[pattern]['message']))
+                            error['message']))
                         error_messages.append(error_message)
                         total_error_count += 1
 
@@ -491,13 +487,13 @@ class GeneralPurposeLinter(python_utils.OBJECT):
             error_messages.extend(bad_pattern_error_messages)
 
             if filepath == 'constants.ts':
-                for pattern in BAD_STRINGS_CONSTANTS:
+                for pattern, constants in BAD_STRINGS_CONSTANTS.items():
                     for line in file_content:
                         if pattern in line:
                             failed = True
                             error_message = ('%s --> %s' % (
                                 filepath,
-                                BAD_STRINGS_CONSTANTS[pattern]['message']))
+                                constants['message']))
                             error_messages.append(error_message)
                             total_error_count += 1
         return concurrent_task_utils.TaskResult(
@@ -569,10 +565,11 @@ class GeneralPurposeLinter(python_utils.OBJECT):
         failed = False
 
         for filepath in files_to_lint:
-            if (filepath.endswith(('.js')) and
-                    filepath.startswith(('core/templates', 'extensions')) and
-                    filepath not in build.JS_FILEPATHS_NOT_TO_BUILD and
-                    not filepath.endswith('protractor.js')):
+            if filepath.endswith(
+                ('.js')) and filepath.startswith(
+                    ('core/templates', 'extensions')) and (
+                        filepath not in build.JS_FILEPATHS_NOT_TO_BUILD
+                        ) and not filepath.endswith('protractor.js'):
                 error_message = (
                     '%s  --> Found extra .js file' % filepath)
                 error_messages.append(error_message)

@@ -405,7 +405,8 @@ class StoryNode(python_utils.OBJECT):
                 'Chapter description should be less than %d chars, received %s'
                 % (description_length_limit, self.description))
 
-        title_limit = android_validation_constants.MAX_CHARS_IN_CHAPTER_TITLE
+        title_limit = (
+            android_validation_constants.MAX_CHARS_IN_EXPLORATION_TITLE)
         if len(self.title) > title_limit:
             raise utils.ValidationError(
                 'Chapter title should be less than %d chars, received %s'
@@ -892,14 +893,14 @@ class Story(python_utils.OBJECT):
         """Returns a Story domain object decoded from a JSON string.
 
         Args:
-            json_string: str. A JSON-encoded utf-8 string that can be
-                decoded into a dictionary representing a Story. Only call
-                on strings that were created using serialize().
+            json_string: str. A JSON-encoded string that can be
+                decoded into a dictionary representing a Story.
+                Only call on strings that were created using serialize().
 
         Returns:
             Story. The corresponding Story domain object.
         """
-        story_dict = json.loads(json_string.decode('utf-8'))
+        story_dict = json.loads(json_string)
         created_on = (
             utils.convert_string_to_naive_datetime_object(
                 story_dict['created_on'])
@@ -921,8 +922,8 @@ class Story(python_utils.OBJECT):
         """Returns the object serialized as a JSON string.
 
         Returns:
-            str. JSON-encoded utf-8 string encoding all of the information
-            composing the object.
+            str. JSON-encoded str encoding all of the information composing
+            the object.
         """
         story_dict = self.to_dict()
         # The only reason we add the version parameter separately is that our
@@ -943,7 +944,7 @@ class Story(python_utils.OBJECT):
             story_dict['last_updated'] = utils.convert_naive_datetime_to_string(
                 self.last_updated)
 
-        return json.dumps(story_dict).encode('utf-8')
+        return json.dumps(story_dict)
 
     @classmethod
     def from_dict(

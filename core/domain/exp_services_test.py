@@ -1247,8 +1247,8 @@ class ExplorationYamlImportingTests(test_utils.GenericTestBase):
 
     EXP_ID = 'exp_id0'
     DEMO_EXP_ID = '0'
-    TEST_ASSET_PATH = 'test_asset.file'
-    TEST_ASSET_CONTENT = 'Hello Oppia'
+    TEST_ASSET_PATH = 'test_asset.txt'
+    TEST_ASSET_CONTENT = b'Hello Oppia'
 
     INTRO_AUDIO_FILE = 'introduction_state.mp3'
     ANSWER_GROUP_AUDIO_FILE = 'correct_answer_feedback.mp3'
@@ -2119,13 +2119,15 @@ title: A title
                 feconf.ENTITY_TYPE_EXPLORATION, self.EXP_0_ID))
         fs.commit('image/abc.png', raw_image)
         zip_file_output = exp_services.export_to_zip_file(self.EXP_0_ID)
-        zf = zipfile.ZipFile(python_utils.string_io(
-            buffer_value=zip_file_output))
+        zf = zipfile.ZipFile(zip_file_output)
 
         self.assertEqual(
             zf.namelist(), ['A title.yaml', 'assets/image/abc.png'])
+        # Read function returns bytes, so we need to decode them before
+        # we compare.
         self.assertEqual(
-            zf.open('A title.yaml').read(), self.SAMPLE_YAML_CONTENT)
+            zf.open('A title.yaml').read().decode('utf-8'),
+            self.SAMPLE_YAML_CONTENT)
 
     def test_export_to_zip_file_with_unpublished_exploration(self):
         """Test the export_to_zip_file() method."""
@@ -2133,8 +2135,7 @@ title: A title
             self.EXP_0_ID, self.owner_id, title='')
 
         zip_file_output = exp_services.export_to_zip_file(self.EXP_0_ID)
-        zf = zipfile.ZipFile(python_utils.string_io(
-            buffer_value=zip_file_output))
+        zf = zipfile.ZipFile(zip_file_output)
 
         self.assertEqual(zf.namelist(), ['Unpublished_exploration.yaml'])
 
@@ -2201,8 +2202,8 @@ title: A title
                 })], 'Add state name')
 
         with python_utils.open_file(
-            os.path.join(feconf.TESTS_DATA_DIR, 'img.png'), 'rb',
-            encoding=None) as f:
+            os.path.join(feconf.TESTS_DATA_DIR, 'img.png'), 'rb', encoding=None
+        ) as f:
             raw_image = f.read()
         fs = fs_domain.AbstractFileSystem(
             fs_domain.GcsFileSystem(
@@ -2210,19 +2211,21 @@ title: A title
         fs.commit('image/abc.png', raw_image)
         # Audio files should not be included in asset downloads.
         with python_utils.open_file(
-            os.path.join(feconf.TESTS_DATA_DIR, 'cafe.mp3'),
-            'rb', encoding=None) as f:
+            os.path.join(feconf.TESTS_DATA_DIR, 'cafe.mp3'), 'rb', encoding=None
+        ) as f:
             raw_audio = f.read()
         fs.commit('audio/cafe.mp3', raw_audio)
 
         zip_file_output = exp_services.export_to_zip_file(self.EXP_0_ID)
-        zf = zipfile.ZipFile(python_utils.string_io(
-            buffer_value=zip_file_output))
+        zf = zipfile.ZipFile(zip_file_output)
 
         self.assertEqual(
             zf.namelist(), ['A title.yaml', 'assets/image/abc.png'])
+        # Read function returns bytes, so we need to decode them before
+        # we compare.
         self.assertEqual(
-            zf.open('A title.yaml').read(), self.SAMPLE_YAML_CONTENT)
+            zf.open('A title.yaml').read().decode('utf-8'),
+            self.SAMPLE_YAML_CONTENT)
         self.assertEqual(zf.open('assets/image/abc.png').read(), raw_image)
 
     def test_export_by_versions(self):
@@ -2283,7 +2286,8 @@ title: A title
         })]
         with python_utils.open_file(
             os.path.join(feconf.TESTS_DATA_DIR, 'img.png'), 'rb',
-            encoding=None) as f:
+            encoding=None
+        ) as f:
             raw_image = f.read()
         fs = fs_domain.AbstractFileSystem(
             fs_domain.GcsFileSystem(
@@ -2307,18 +2311,22 @@ title: A title
         # Download version 2.
         zip_file_output = exp_services.export_to_zip_file(
             self.EXP_0_ID, version=2)
-        zf = zipfile.ZipFile(python_utils.string_io(
-            buffer_value=zip_file_output))
+        zf = zipfile.ZipFile(zip_file_output)
+        # Read function returns bytes, so we need to decode them before
+        # we compare.
         self.assertEqual(
-            zf.open('A title.yaml').read(), self.SAMPLE_YAML_CONTENT)
+            zf.open('A title.yaml').read().decode('utf-8'),
+            self.SAMPLE_YAML_CONTENT)
 
         # Download version 3.
         zip_file_output = exp_services.export_to_zip_file(
             self.EXP_0_ID, version=3)
-        zf = zipfile.ZipFile(python_utils.string_io(
-            buffer_value=zip_file_output))
+        zf = zipfile.ZipFile(zip_file_output)
+        # Read function returns bytes, so we need to decode them before
+        # we compare.
         self.assertEqual(
-            zf.open('A title.yaml').read(), self.UPDATED_YAML_CONTENT)
+            zf.open('A title.yaml').read().decode('utf-8'),
+            self.UPDATED_YAML_CONTENT)
 
 
 class YAMLExportUnitTests(ExplorationServicesUnitTests):
@@ -3091,13 +3099,7 @@ class UpdateStateTests(ExplorationServicesUnitTests):
             _get_change_list(
                 'State 2',
                 exp_domain.STATE_PROPERTY_NEXT_CONTENT_ID_INDEX,
-                {
-                    'property_name': 'next_content_id_index',
-                    'cmd': 'edit_state_property',
-                    'old_value': 3,
-                    'state_name': 'State 2',
-                    'new_value': 4
-                }) +
+                4) +
             _get_change_list(
                 'State 2',
                 exp_domain.STATE_PROPERTY_INTERACTION_ANSWER_GROUPS,
@@ -3197,7 +3199,9 @@ class UpdateStateTests(ExplorationServicesUnitTests):
             'inputs']['x'] = 'abc'
         with self.assertRaisesRegexp(
             Exception,
-            'abc has the wrong type. It should be a NonnegativeInt.'):
+            'Value has the wrong type. It should be a NonnegativeInt. '
+            'The value is abc'
+        ):
             exp_services.update_exploration(
                 self.owner_id, self.EXP_0_ID,
                 _get_change_list(
@@ -3335,8 +3339,178 @@ class UpdateStateTests(ExplorationServicesUnitTests):
             'bn': 1,
         })
 
+    def test_mark_written_translation_as_needing_update(self):
+        """Test marking of written translation for a given language and content
+        id as needing update.
+        """
+        exploration = exp_fetchers.get_exploration_by_id(self.EXP_0_ID)
+        self.assertEqual(exploration.get_translation_counts(), {})
+        # Update the exploration with a content and add corresponding
+        # translations in two languages.
+        change_list = [
+            exp_domain.ExplorationChange({
+                'cmd': exp_domain.CMD_EDIT_STATE_PROPERTY,
+                'state_name': self.init_state_name,
+                'property_name': 'content',
+                'new_value': {
+                    'html': '<p><strong>Test content</strong></p>',
+                    'content_id': 'content',
+                }
+            }),
+            exp_domain.ExplorationChange({
+                'cmd': exp_domain.CMD_ADD_WRITTEN_TRANSLATION,
+                'state_name': self.init_state_name,
+                'content_id': 'content',
+                'language_code': 'hi',
+                'content_html': '<p>Original content</p>',
+                'translation_html': '<p>Translated text in Hindi</p>',
+                'data_format': 'html'
+            }),
+            exp_domain.ExplorationChange({
+                'cmd': exp_domain.CMD_ADD_WRITTEN_TRANSLATION,
+                'state_name': self.init_state_name,
+                'content_id': 'content',
+                'language_code': 'bn',
+                'content_html': '<p>Original content</p>',
+                'translation_html': '<p>Translated text in Bangla</p>',
+                'data_format': 'html'
+            })
+        ]
+        exp_services.update_exploration(
+            self.owner_id, self.EXP_0_ID, change_list, '')
+
+        exploration = exp_fetchers.get_exploration_by_id(self.EXP_0_ID)
+
+        # Assert that there are translations in two languages.
+        self.assertEqual(exploration.get_translation_counts(), {
+            'hi': 1,
+            'bn': 1
+        })
+        # Assert that the written translations are not marked as needing update.
+        actual_written_translations = (
+            exploration.states[self.init_state_name].written_translations)
+        hindi_written_translation = (
+            actual_written_translations.translations_mapping['content']['hi'])
+        bangla_written_translation = (
+            actual_written_translations.translations_mapping['content']['bn'])
+        self.assertFalse(hindi_written_translation.needs_update)
+        self.assertFalse(bangla_written_translation.needs_update)
+
+        # Mark all translations for a state as needing update.
+        update_change_list = [exp_domain.ExplorationChange({
+            'cmd': exp_domain.CMD_MARK_WRITTEN_TRANSLATION_AS_NEEDING_UPDATE,
+            'state_name': self.init_state_name,
+            'content_id': 'content',
+            'language_code': 'hi'
+        })]
+        exp_services.update_exploration(
+            self.owner_id, self.EXP_0_ID, update_change_list, '')
+
+        exploration = exp_fetchers.get_exploration_by_id(self.EXP_0_ID)
+
+        # Assert that there are no completed translations and check that the
+        # needs_update property is set for the corresponding written
+        # translations.
+        self.assertEqual(exploration.get_translation_counts(), {
+            'bn': 1
+        })
+        actual_written_translations = (
+            exploration.states[self.init_state_name].written_translations)
+        hindi_written_translation = (
+            actual_written_translations.translations_mapping['content']['hi'])
+        bangla_written_translation = (
+            actual_written_translations.translations_mapping['content']['bn'])
+        self.assertTrue(hindi_written_translation.needs_update)
+        self.assertFalse(bangla_written_translation.needs_update)
+
+        # Update translations again so the translations are completed.
+        change_list_2 = [
+            exp_domain.ExplorationChange({
+                'cmd': exp_domain.CMD_ADD_WRITTEN_TRANSLATION,
+                'state_name': self.init_state_name,
+                'content_id': 'content',
+                'language_code': 'hi',
+                'content_html': '<p>Original content</p>',
+                'translation_html': '<p>Translated text in Hindi</p>',
+                'data_format': 'html'
+            })
+        ]
+        exp_services.update_exploration(
+            self.owner_id, self.EXP_0_ID, change_list_2, '')
+
+        exploration = exp_fetchers.get_exploration_by_id(self.EXP_0_ID)
+
+        # Assert that the written translations are not marked as needing update.
+        actual_written_translations = (
+            exploration.states[self.init_state_name].written_translations)
+        hindi_written_translation = (
+            actual_written_translations.translations_mapping['content']['hi'])
+        bangla_written_translation = (
+            actual_written_translations.translations_mapping['content']['bn'])
+        self.assertFalse(hindi_written_translation.needs_update)
+        self.assertFalse(bangla_written_translation.needs_update)
+
+        # Check that the property can be changed when working
+        # on old version.
+        # Add a change to upgrade the version.
+        exp_services.update_exploration(
+            self.owner_id, self.EXP_0_ID, _get_change_list(
+                self.init_state_name,
+                exp_domain.STATE_PROPERTY_INTERACTION_CUST_ARGS,
+                {
+                    'placeholder': {
+                        'value': {
+                            'content_id': 'ca_placeholder_0',
+                            'unicode_str': 'placeholder'
+                        }
+                    },
+                    'rows': {'value': 1}
+                }),
+            'Add Customization Args')
+
+        # Mark all translations for a state as needing update in the
+        # old version.
+        update_change_list_2 = [exp_domain.ExplorationChange({
+            'cmd': exp_domain.CMD_MARK_WRITTEN_TRANSLATION_AS_NEEDING_UPDATE,
+            'state_name': self.init_state_name,
+            'content_id': 'content',
+            'language_code': 'hi'
+        })]
+        changes_are_mergeable = exp_services.are_changes_mergeable(
+            self.EXP_0_ID, 4, update_change_list_2)
+        self.assertTrue(changes_are_mergeable)
+        exp_services.update_exploration(
+            self.owner_id, self.EXP_0_ID, update_change_list_2,
+            '')
+
+        exploration = exp_fetchers.get_exploration_by_id(self.EXP_0_ID)
+
+        # Assert that there are no completed translations and check that the
+        # needs_update property is set for the corresponding written
+        # translations in the final version.
+        self.assertEqual(exploration.get_translation_counts(), {
+            'bn': 1
+        })
+        actual_written_translations = (
+            exploration.states[self.init_state_name].written_translations)
+        hindi_written_translation = (
+            actual_written_translations.translations_mapping['content']['hi'])
+        bangla_written_translation = (
+            actual_written_translations.translations_mapping['content']['bn'])
+        self.assertTrue(hindi_written_translation.needs_update)
+        self.assertFalse(bangla_written_translation.needs_update)
+
+        # Assert that final version has all the changes made above.
+        init_interaction = exploration.init_state.interaction
+        customization_args = init_interaction.customization_args
+        self.assertEqual(
+            customization_args['placeholder'].value.unicode_str,
+            'placeholder')
+
     def test_mark_written_translations_as_needing_update(self):
-        """Test updating of content."""
+        """Test marking of written translations in all languages for a
+        particular content id as needing update.
+        """
         exploration = exp_fetchers.get_exploration_by_id(self.EXP_0_ID)
         self.assertEqual(exploration.get_translation_counts(), {})
         # Update the exploration with a content and add corresponding
@@ -4476,9 +4650,6 @@ class ExplorationCommitLogUnitTests(ExplorationServicesUnitTests):
         self.albert = user_services.get_user_actions_info(self.albert_id)
         self.bob = user_services.get_user_actions_info(self.bob_id)
 
-        # This needs to be done in a toplevel wrapper because the datastore
-        # puts to the event log are asynchronous.
-        @transaction_services.toplevel_wrapper
         def populate_datastore():
             """Populates the database according to the sequence."""
             exploration_1 = self.save_new_valid_exploration(
@@ -4985,10 +5156,10 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
                         'contributor_ids', 'version',
                         'exploration_model_created_on',
                         'exploration_model_last_updated']
-        for exp_id in actual_summaries:
+        for exp_id, actual_summary in actual_summaries.items():
             for prop in simple_props:
                 self.assertEqual(
-                    getattr(actual_summaries[exp_id], prop),
+                    getattr(actual_summary, prop),
                     getattr(expected_summaries[exp_id], prop))
 
     def test_get_all_exploration_summaries(self):
