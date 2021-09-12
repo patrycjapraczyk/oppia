@@ -17,12 +17,13 @@
  * in editor.
  */
 
+ import { HelpModalComponent } from 'pages/exploration-editor-page/modal-templates/help-modal.component';
+ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
 require('domain/utilities/url-interpolation.service.ts');
 require(
   'pages/exploration-editor-page/feedback-tab/services/' +
   'thread-data-backend-api.service.ts');
-require(
-  'pages/exploration-editor-page/modal-templates/help-modal.controller.ts');
 require('pages/exploration-editor-page/services/exploration-rights.service.ts');
 require(
   'pages/exploration-editor-page/services/exploration-warnings.service.ts');
@@ -47,8 +48,8 @@ angular.module('oppia').component('editorNavigation', {
     'ContextService', 'EditabilityService',
     'ExplorationImprovementsService', 'ExplorationRightsService',
     'ExplorationSaveService',
-    'ExplorationWarningsService',
-    'InternetConnectivityService', 'RouterService', 'SiteAnalyticsService',
+    'ExplorationWarningsService',  'NgbModal',
+    'RouterService', 'SiteAnalyticsService',
     'StateTutorialFirstTimeService',
     'ThreadDataBackendApiService',
     'UserExplorationPermissionsService', 'UserService',
@@ -57,9 +58,9 @@ angular.module('oppia').component('editorNavigation', {
         $q, $rootScope, $scope, $timeout, $uibModal, ChangeListService,
         ContextService, EditabilityService,
         ExplorationImprovementsService, ExplorationRightsService,
-        ExplorationSaveService,
-        ExplorationWarningsService,
-        InternetConnectivityService, RouterService, SiteAnalyticsService,
+        ExplorationSaveService, 
+        ExplorationWarningsService, NgbModal,
+        RouterService, SiteAnalyticsService,
         StateTutorialFirstTimeService,
         ThreadDataBackendApiService,
         UserExplorationPermissionsService, UserService,
@@ -70,14 +71,12 @@ angular.module('oppia').component('editorNavigation', {
         SiteAnalyticsService.registerClickHelpButtonEvent(explorationId);
         var EDITOR_TUTORIAL_MODE = 'editor';
         var TRANSLATION_TUTORIAL_MODE = 'translation';
-        $uibModal.open({
-          template: require(
-            'pages/exploration-editor-page/modal-templates/' +
-            'help-modal.template.html'),
-          backdrop: true,
-          controller: 'HelpModalController',
-          windowClass: 'oppia-help-modal'
-        }).result.then(mode => {
+        let modalRef: NgbModalRef = NgbModal.open(
+          HelpModalComponent, {
+            backdrop: true,
+            windowClass: 'help-modal',
+          });
+        modalRef.result.then(mode => {
           if (mode === EDITOR_TUTORIAL_MODE) {
             StateTutorialFirstTimeService.onOpenEditorTutorial.emit();
           } else if (mode === TRANSLATION_TUTORIAL_MODE) {

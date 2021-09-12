@@ -28,9 +28,9 @@ fdescribe('Help Modal Component', () => {
   let contextService: ContextService;
   let siteAnalyticsService: SiteAnalyticsService;
   let ngbActiveModal: NgbActiveModal;
-  let registerOpenTutorialFromHelpCenterEventSpy = null;
-  let registerVisitHelpCenterEventSpy = null;
-  let explorationId = 'exp1';
+  let registerOpenTutorialFromHelpCenterEventSpy;
+  let registerVisitHelpCenterEventSpy;
+  const explorationId = 'exp1';
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -49,24 +49,22 @@ fdescribe('Help Modal Component', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(HelpModalComponent);
-    componentInstance = fixture.componentInstance;
-    contextService = TestBed.inject(ContextService);
-    siteAnalyticsService = TestBed.inject(SiteAnalyticsService);
     ngbActiveModal = (TestBed.inject(NgbActiveModal) as unknown) as
       jasmine.SpyObj<NgbActiveModal>;
-    spyOn(ContextService, 'getExplorationId').and.returnValue(explorationId);
+    contextService = TestBed.inject(ContextService);
+    spyOn(contextService, 'getExplorationId').and.returnValue(explorationId);
 
-    registerOpenTutorialFromHelpCenterEventSpy = spyOn(
-    SiteAnalyticsService, 'registerOpenTutorialFromHelpCenterEvent');
-    registerVisitHelpCenterEventSpy = spyOn(
-      SiteAnalyticsService, 'registerVisitHelpCenterEvent');
+    fixture = TestBed.createComponent(HelpModalComponent);
+    componentInstance = fixture.componentInstance;
+    siteAnalyticsService = (TestBed.inject(SiteAnalyticsService) as unknown) as jasmine.SpyObj<SiteAnalyticsService>
+    spyOn(siteAnalyticsService, 'registerOpenTutorialFromHelpCenterEvent');
+    spyOn(siteAnalyticsService, 'registerVisitHelpCenterEvent');
   });
 
   it('should begin editor tutorial when closing the modal', () => {
     componentInstance.beginEditorTutorial();
 
-    expect(registerOpenTutorialFromHelpCenterEventSpy)
+    expect(siteAnalyticsService.registerOpenTutorialFromHelpCenterEvent)
       .toHaveBeenCalledWith(explorationId);
     expect(ngbActiveModal.close).toHaveBeenCalledWith('editor');
   });
@@ -74,7 +72,7 @@ fdescribe('Help Modal Component', () => {
   it('should begin translation tutorial when closing the modal', () => {
     componentInstance.beginTranslationTutorial();
 
-    expect(registerOpenTutorialFromHelpCenterEventSpy)
+    expect(siteAnalyticsService.registerOpenTutorialFromHelpCenterEvent)
       .toHaveBeenCalledWith(explorationId);
     expect(ngbActiveModal.close).toHaveBeenCalledWith('translation');
   });
@@ -82,7 +80,7 @@ fdescribe('Help Modal Component', () => {
   it('should dismiss modal when changing to help center', () => {
     componentInstance.goToHelpCenter();
 
-    expect(registerVisitHelpCenterEventSpy).toHaveBeenCalledWith(explorationId);
+    expect(siteAnalyticsService.registerVisitHelpCenterEvent).toHaveBeenCalledWith(explorationId);
     expect(ngbActiveModal.dismiss).toHaveBeenCalledWith('cancel');
   });
 });

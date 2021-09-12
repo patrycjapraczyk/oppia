@@ -23,7 +23,7 @@ import { SiteAnalyticsService } from 'services/site-analytics.service';
 
 @Component({
   selector: 'oppia-help-modal',
-  templateUrl: './help-modal.template.html'
+  templateUrl: './help-modal.component.html'
 })
 export class HelpModalComponent {
   private explorationId: string;
@@ -35,7 +35,8 @@ export class HelpModalComponent {
     private contextService: ContextService,
     private siteAnalytiscService: SiteAnalyticsService,
   ) {
-    this.explorationId = this.contextService.getExplorationId();
+    this.explorationId = (
+      contextService.getExplorationId());
   }
 
   beginEditorTutorial(): void {

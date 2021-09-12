@@ -17,6 +17,9 @@
  *               help tab in the navbar.
  */
 
+ import { HelpModalComponent } from 'pages/exploration-editor-page/modal-templates/help-modal.component';
+ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
 require('components/on-screen-keyboard/on-screen-keyboard.component.ts');
 require(
   'components/version-diff-visualization/' +
@@ -174,7 +177,8 @@ angular.module('oppia').component('explorationEditorPage', {
     'ExplorationStatesService', 'ExplorationTagsService',
     'ExplorationTitleService', 'ExplorationWarningsService',
     'FocusManagerService', 'GraphDataService', 'InternetConnectivityService',
-    'LoaderService', 'PageTitleService', 'ParamChangesObjectFactory',
+    'LoaderService', 'NgbModal',
+    'PageTitleService', 'ParamChangesObjectFactory',
     'ParamSpecsObjectFactory', 'PreventPageUnloadEventService',
     'RouterService', 'SiteAnalyticsService',
     'StateClassifierMappingService',
@@ -198,7 +202,8 @@ angular.module('oppia').component('explorationEditorPage', {
         ExplorationStatesService, ExplorationTagsService,
         ExplorationTitleService, ExplorationWarningsService,
         FocusManagerService, GraphDataService, InternetConnectivityService,
-        LoaderService, PageTitleService, ParamChangesObjectFactory,
+        LoaderService, NgbModal,
+        PageTitleService, ParamChangesObjectFactory,
         ParamSpecsObjectFactory, PreventPageUnloadEventService,
         RouterService, SiteAnalyticsService,
         StateClassifierMappingService,
@@ -481,14 +486,12 @@ angular.module('oppia').component('explorationEditorPage', {
         SiteAnalyticsService.registerClickHelpButtonEvent(explorationId);
         var EDITOR_TUTORIAL_MODE = 'editor';
         var TRANSLATION_TUTORIAL_MODE = 'translation';
-        $uibModal.open({
-          template: require(
-            'pages/exploration-editor-page/modal-templates/' +
-              'help-modal.template.html'),
-          backdrop: true,
-          controller: 'HelpModalController',
-          windowClass: 'oppia-help-modal'
-        }).result.then(mode => {
+        let modalRef: NgbModalRef = NgbModal.open(
+          HelpModalComponent, {
+            backdrop: true,
+            windowClass: 'help-modal',
+          });
+        modalRef.result.then(mode => {
           if (mode === EDITOR_TUTORIAL_MODE) {
             StateTutorialFirstTimeService.onOpenEditorTutorial.emit();
           } else if (mode === TRANSLATION_TUTORIAL_MODE) {
