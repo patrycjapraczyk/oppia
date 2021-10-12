@@ -23,7 +23,7 @@ import os
 import re
 import sys
 
-import python_utils
+from core import python_utils
 
 LCOV_FILE_PATH = os.path.join(os.pardir, 'karma_coverage_reports', 'lcov.info')
 RELEVANT_LCOV_LINE_PREFIXES = ['SF', 'LH', 'LF']
@@ -46,7 +46,7 @@ NOT_FULLY_COVERED_FILENAMES = [
     'Base.ts',
     'ck-editor-4-rte.component.ts',
     'ck-editor-4-widgets.initializer.ts',
-    'collection-editor-navbar-breadcrumb.directive.ts',
+    'collection-editor-navbar-breadcrumb.component.ts',
     'collection-footer.component.ts',
     'collection-navbar.component.ts',
     'collection-player-page.directive.ts',
@@ -90,14 +90,13 @@ NOT_FULLY_COVERED_FILENAMES = [
     'truncate-and-capitalize.pipe.ts',
     'truncate-input-based-on-interaction-answer-type.filter.ts',
     'truncate.filter.ts',
-    'tutor-card.directive.ts',
     # Please don't try to cover `unit-test-utils.ajs.ts` file.
     'unit-test-utils.ajs.ts',
     'voiceover-recording.service.ts',
 ]
 
 
-class LcovStanzaRelevantLines(python_utils.OBJECT):
+class LcovStanzaRelevantLines:
     """Gets the relevant lines from a lcov stanza."""
 
     def __init__(self, stanza):
