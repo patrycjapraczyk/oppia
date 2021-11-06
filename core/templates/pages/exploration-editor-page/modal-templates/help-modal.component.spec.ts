@@ -22,14 +22,12 @@ import { SiteAnalyticsService } from 'services/site-analytics.service';
 import { ContextService } from 'services/context.service';
 import { HelpModalComponent } from './help-modal.component';
 
-fdescribe('Help Modal Component', () => {
+describe('Help Modal Component', () => {
   let fixture: ComponentFixture<HelpModalComponent>;
   let componentInstance: HelpModalComponent;
   let contextService: ContextService;
   let siteAnalyticsService: SiteAnalyticsService;
   let ngbActiveModal: NgbActiveModal;
-  let registerOpenTutorialFromHelpCenterEventSpy;
-  let registerVisitHelpCenterEventSpy;
   const explorationId = 'exp1';
 
   beforeEach(waitForAsync(() => {
@@ -59,6 +57,8 @@ fdescribe('Help Modal Component', () => {
     siteAnalyticsService = (TestBed.inject(SiteAnalyticsService) as unknown) as jasmine.SpyObj<SiteAnalyticsService>
     spyOn(siteAnalyticsService, 'registerOpenTutorialFromHelpCenterEvent');
     spyOn(siteAnalyticsService, 'registerVisitHelpCenterEvent');
+    spyOn(ngbActiveModal, 'close');
+    spyOn(ngbActiveModal, 'dismiss');
   });
 
   it('should begin editor tutorial when closing the modal', () => {
