@@ -71,21 +71,15 @@ angular.module('oppia').component('editorNavigation', {
         SiteAnalyticsService.registerClickHelpButtonEvent(explorationId);
         var EDITOR_TUTORIAL_MODE = 'editor';
         var TRANSLATION_TUTORIAL_MODE = 'translation';
-        let modalRef: NgbModalRef = NgbModal.open(
-          HelpModalComponent, {
-            backdrop: true,
-            windowClass: 'help-modal',
-          });
-        modalRef.result.then(mode => {
+        NgbModal.open(HelpModalComponent, {
+          backdrop: true,
+          windowClass: 'oppia-help-modal'
+        }).result.then(function(mode) {
           if (mode === EDITOR_TUTORIAL_MODE) {
             StateTutorialFirstTimeService.onOpenEditorTutorial.emit();
           } else if (mode === TRANSLATION_TUTORIAL_MODE) {
             StateTutorialFirstTimeService.onOpenTranslationTutorial.emit();
           }
-        }, () => {
-          // Note to developers:
-          // This callback is triggered when the Cancel button is clicked.
-          // No further action is needed.
         });
       };
 
